@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Urna do Quintal das Véias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=IBM+Plex+Mono:wght@500;700&display=swap">
+<style>
+  /* Visual único, inspirado na urna real: corpo bege, teclas pretas,
+     BRANCO / CORRIGE / CONFIRMA nas cores oficiais. */
+  :root {
+    color-scheme: light;
+    --chao: #3f4a3c;          /* verde-folha escuro do quintal */
+    --chao-2: #4b5847;
+    --corpo: #d9d2bf;         /* plástico bege da urna */
+    --corpo-sombra: #b9b09a;
+    --moldura: #2b2a27;
+    --tela: #f4f4ee;
+    --tela-texto: #161616;
+    --tecla: #1d1d1d;
+    --tecla-texto: #f5f5f5;
+    --branco: #f7f7f2;
+    --corrige: #e0822b;
+    --confirma: #2f9a4a;
+    --texto-claro: #eef0e6;
+    --texto-suave: #c7cdbd;
+    --destaque: #f2c94c;
+    --perigo: #c0392b;
+    --display: "Archivo Black", "Arial Black", Impact, sans-serif;
+    --corpo-fonte: "IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  html { background: var(--chao); }
+  body {
+    background: var(--chao);
+    background-image: radial-gradient(circle at 20% 0%, var(--chao-2), transparent 60%);
+    color: var(--texto-claro);
+    font-family: var(--corpo-fonte);
+    font-size: 16px;
+    min-height: 100vh;
+    padding-inline: 16px;
+    padding-block: 24px 40px;
+  }
+  button, input { font: inherit; }
+  :focus-visible { outline: 3px solid var(--destaque); outline-offset: 2px; }
+
+  .topo { max-width: 980px; margin: 0 auto 20px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+  .topo h1 { font-family: var(--display); font-weight: 400; font-size: clamp(1.5rem, 4vw, 2.2rem); margin: 0; letter-spacing: .01em; text-wrap: balance; }
+  .topo p { margin: 0; color: var(--texto-suave); font-size: .95rem; }
+
+  /* ---------- Urna ---------- */
+  .urna {
+    max-width: 980px; margin: 0 auto;
+    background: linear-gradient(180deg, var(--corpo), var(--corpo-sombra));
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 18px 40px rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.5);
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 18px;
+  }
+  @media (max-width: 760px) { .urna { grid-template-columns: 1fr; padding: 12px; } .tela { aspect-ratio: auto; min-height: 300px; } }
+
+  .moldura { background: var(--moldura); border-radius: 10px; padding: 14px; }
+  .tela {
+    background: var(--tela); color: var(--tela-texto);
+    aspect-ratio: 4 / 3; max-width: 100%;
+    border-radius: 3px;
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+    font-family: var(--corpo-fonte);
+  }
+  .tela-corpo { flex: 1; display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 4% 5% 2%; min-height: 0; }
+  .tela-info { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .rotulo-sm { font-size: clamp(.7rem, 1.8vw, .9rem); font-weight: 600; letter-spacing: .06em; }
+  .cargo { font-size: clamp(1.3rem, 4vw, 2rem); font-weight: 700; letter-spacing: .04em; margin: 2% 0 3%; }
+  .numero { display: flex; align-items: center; gap: 10px; font-size: clamp(.9rem, 2.4vw, 1.1rem); }
+  .caixas { display: flex; gap: 6px; }
+  .caixa {
+    width: clamp(30px, 6vw, 44px); height: clamp(38px, 7.5vw, 54px);
+    border: 1.5px solid var(--tela-texto);
+    display: grid; place-items: center;
+    font-family: var(--mono); font-weight: 700; font-size: clamp(1.3rem, 4vw, 2rem);
+  }
+  .caixa.ativa { animation: pisca 1s steps(1) infinite; background: var(--tela-texto); }
+  @keyframes pisca { 50% { background: transparent; } }
+  .dado { font-size: clamp(.9rem, 2.4vw, 1.15rem); line-height: 1.35; overflow-wrap: anywhere; }
+  .dado b { font-weight: 700; }
+  .aviso-grande { font-size: clamp(1.4rem, 4.6vw, 2.4rem); font-weight: 700; letter-spacing: .03em; margin-top: 4%; }
+  .aviso-grande.centro { text-align: center; margin: auto; }
+  .foto { width: clamp(70px, 16vw, 130px); display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .foto-quadro { width: 100%; aspect-ratio: 3 / 4; border: 1.5px solid var(--tela-texto); display: grid; place-items: center; font-family: var(--display); font-size: clamp(1.4rem, 4.4vw, 2.6rem); color: #fff; }
+  .foto-quadro img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .foto span { font-size: clamp(.6rem, 1.5vw, .75rem); font-weight: 600; }
+  .tela-rodape { border-top: 1.5px solid var(--tela-texto); padding: 2% 5% 3%; font-size: clamp(.72rem, 1.9vw, .95rem); line-height: 1.45; }
+  .tela-rodape[hidden] { display: none !important; }
+  .fim { position: absolute; inset: 0; display: grid; place-items: center; background: var(--tela); }
+  .fim strong { font-size: clamp(3.5rem, 14vw, 7rem); font-weight: 700; letter-spacing: .12em; }
+  .fim small { position: absolute; bottom: 8%; font-size: clamp(.75rem, 2vw, 1rem); font-weight: 600; letter-spacing: .06em; }
+
+  .marca { margin-top: 12px; display: flex; justify-content: space-between; gap: 8px; color: #8d8a80; font-family: var(--mono); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; flex-wrap: wrap; }
+
+  /* ---------- Teclado ---------- */
+  .painel-teclado { background: #26251f; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .brasao { text-align: center; color: #d8d4c5; font-family: var(--display); font-size: .82rem; letter-spacing: .1em; line-height: 1.3; }
+  .brasao small { display: block; font-family: var(--corpo-fonte); font-weight: 600; font-size: .7rem; color: #a29f92; letter-spacing: .12em; }
+  .numeros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .numeros .zero { grid-column: 2; }
+  .tecla {
+    border: 0; border-radius: 6px; cursor: pointer;
+    background: var(--tecla); color: var(--tecla-texto);
+    font-family: var(--mono); font-weight: 700; font-size: 1.6rem;
+    padding: 12px 0;
+    box-shadow: 0 4px 0 #000, inset 0 1px 0 rgba(255,255,255,.15);
+    transition: transform .05s, box-shadow .05s;
+    touch-action: manipulation;
+  }
+  .tecla:active, .tecla.apertada { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
+  .acoes { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 8px; align-items: end; }
+  .acoes .tecla { font-family: var(--corpo-fonte); font-size: .82rem; letter-spacing: .05em; padding: 14px 2px; font-weight: 700; }
+  .acoes .t-branco { background: var(--branco); color: #111; box-shadow: 0 4px 0 #8f8f88; }
+  .acoes .t-corrige { background: var(--corrige); color: #111; box-shadow: 0 4px 0 #8a4a12; }
+  .acoes .t-confirma { background: var(--confirma); color: #fff; padding-block: 22px; box-shadow: 0 4px 0 #185a28; }
+  .acoes .tecla:active, .acoes .tecla.apertada { box-shadow: 0 1px 0 #000; }
+  .dica { color: #a29f92; font-size: .78rem; text-align: center; margin: 0; }
+  .dica kbd { font-family: var(--mono); background: #3a3931; color: #e8e5d8; padding: 1px 5px; border-radius: 3px; }
+
+  /* ---------- Rodapé / mesário ---------- */
+  .rodape { max-width: 980px; margin: 18px auto 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; color: var(--texto-suave); font-size: .92rem; }
+  .btn {
+    border: 1.5px solid var(--texto-suave); background: transparent; color: var(--texto-claro);
+    border-radius: 6px; padding: 8px 14px; cursor: pointer; font-weight: 600;
+  }
+  .btn:hover { background: rgba(255,255,255,.08); }
+  .btn.cheio { background: var(--destaque); border-color: var(--destaque); color: #1b1b1b; }
+  .btn.perigo { border-color: var(--perigo); color: #ffd9d4; }
+  .btn.perigo.armado { background: var(--perigo); color: #fff; }
+
+  .mesario { max-width: 980px; margin: 18px auto 0; background: #f3f0e6; color: #1e1f1b; border-radius: 12px; padding: 20px; display: grid; gap: 22px; }
+  .mesario h2 { font-family: var(--display); font-weight: 400; margin: 0; font-size: 1.35rem; }
+  .mesario h3 { margin: 0 0 10px; font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; color: #5a5b52; }
+  .mesario .btn { color: #1e1f1b; border-color: #6d6e64; }
+  .mesario .btn.cheio { border-color: #1e1f1b; background: #1e1f1b; color: #f3f0e6; }
+  .mesario .btn.perigo { color: var(--perigo); border-color: var(--perigo); }
+  .mesario .btn.perigo.armado { background: var(--perigo); color: #fff; }
+  .cab-mesario { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+  .pin-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .pin-form input, .cand-form input { border: 1.5px solid #8f9084; border-radius: 6px; padding: 8px 10px; background: #fff; color: #1e1f1b; min-width: 0; }
+  .pin-form input { width: 9ch; font-family: var(--mono); letter-spacing: .3em; }
+  .erro { color: var(--perigo); font-weight: 600; font-size: .9rem; margin: 0; }
+  .ok { color: #1f7a3a; font-weight: 600; font-size: .9rem; margin: 0; }
+
+  .boletim { font-family: var(--mono); font-size: .9rem; display: grid; gap: 10px; }
+  .linha-res { display: grid; grid-template-columns: 3ch minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; }
+  .linha-res .nm { font-family: var(--corpo-fonte); font-weight: 600; font-size: 1rem; overflow-wrap: anywhere; }
+  .linha-res .vt { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .barra { grid-column: 2 / 4; height: 10px; background: #dedacd; border-radius: 5px; overflow: hidden; }
+  .barra i { display: block; height: 100%; border-radius: 5px; }
+  .resumo { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--mono); font-size: .85rem; color: #45463e; border-top: 1px dashed #aaa99c; padding-top: 10px; font-variant-numeric: tabular-nums; }
+  .veredito { font-family: var(--corpo-fonte); font-size: 1.05rem; background: #1e1f1b; color: #f3f0e6; padding: 10px 14px; border-radius: 8px; }
+  .veredito b { color: var(--destaque); }
+
+  .cand-form { display: grid; gap: 10px; }
+  .cand-linha { display: grid; grid-template-columns: 54px 5ch minmax(0, 1.2fr) minmax(0, 1.4fr); gap: 8px; align-items: center; padding-bottom: 10px; border-bottom: 1px dashed #c9c6b8; }
+  .cand-linha input.num { font-family: var(--mono); text-align: center; }
+  .miniatura { grid-row: span 2; width: 54px; aspect-ratio: 3 / 4; border: 1.5px solid #1e1f1b; display: grid; place-items: center; overflow: hidden; color: #fff; font-family: var(--display); font-size: 1.1rem; }
+  .miniatura img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .foto-botoes { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: .88rem; }
+  .foto-botoes .btn { padding: 5px 10px; font-size: .85rem; }
+  .foto-botoes input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .foto-botoes label.btn:focus-within { outline: 3px solid var(--destaque); outline-offset: 2px; }
+  @media (max-width: 520px) { .cand-linha { grid-template-columns: 54px 5ch minmax(0, 1fr); } .miniatura { grid-row: span 3; } .cand-linha .partido { grid-column: 2 / -1; } }
+  .linha-botoes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .caixa.ativa { animation: none; background: #cfcfc6; }
+    .tecla { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <h1>Eleição do Quintal das Véias</h1>
+  <p>Eleição para Presidente · 1º turno · domingo</p>
+</header>
+
+<main class="urna" aria-label="Urna eletrônica">
+  <section>
+    <div class="moldura">
+      <div class="tela" id="tela" aria-live="polite"></div>
+    </div>
+    <div class="marca"><span>Justiça Eleitoral do Quintal</span><span id="contador">0 eleitores votaram</span></div>
+  </section>
+
+  <section class="painel-teclado" aria-label="Teclado da urna">
+    <div class="brasao">JUSTIÇA ELEITORAL<small>DO QUINTAL DAS VÉIAS</small></div>
+    <div class="numeros" id="numeros"></div>
+    <div class="acoes">
+      <button class="tecla t-branco" id="t-branco" type="button">BRANCO</button>
+      <button class="tecla t-corrige" id="t-corrige" type="button">CORRIGE</button>
+      <button class="tecla t-confirma" id="t-confirma" type="button">CONFIRMA</button>
+    </div>
+    <p class="dica">No teclado: <kbd>0</kbd>–<kbd>9</kbd> · <kbd>B</kbd> branco · <kbd>⌫</kbd> corrige · <kbd>Enter</kbd> confirma</p>
+  </section>
+</main>
+
+<div class="rodape">
+  <span>Um voto por pessoa. Depois do “FIM”, chame o próximo eleitor.</span>
+  <button class="btn" id="abrir-mesario" type="button">Área do mesário</button>
+</div>
+
+<section class="mesario" id="mesario" hidden aria-label="Área do mesário">
+  <div class="cab-mesario">
+    <h2>Área do mesário</h2>
+    <button class="btn" id="fechar-mesario" type="button">Voltar para a votação</button>
+  </div>
+
+  <form class="pin-form" id="pin-form" autocomplete="off">
+    <label for="pin">Senha do mesário</label>
+    <input id="pin" inputmode="numeric" type="password" maxlength="8">
+    <button class="btn cheio" type="submit">Entrar</button>
+    <p class="erro" id="pin-erro" hidden>Senha errada. A senha inicial é 1234.</p>
+  </form>
+
+  <div id="mesario-conteudo" hidden style="display:grid;gap:26px">
+    <div>
+      <h3>Boletim de urna</h3>
+      <div class="boletim" id="boletim"></div>
+    </div>
+
+    <div>
+      <h3>Candidatos</h3>
+      <form class="cand-form" id="cand-form" autocomplete="off"></form>
+      <div class="linha-botoes" style="margin-top:10px">
+        <button class="btn cheio" id="salvar-cand" type="button">Salvar candidatos</button>
+        <p class="ok" id="cand-ok" hidden>Candidatos salvos.</p>
+        <p class="erro" id="cand-erro" hidden></p>
+      </div>
+    </div>
+
+    <div>
+      <h3>Encerrar e começar outra eleição</h3>
+      <div class="linha-botoes">
+        <button class="btn perigo" id="zerar" type="button">Zerar todos os votos</button>
+        <span id="zerar-msg" style="font-size:.9rem"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function () {
+  // ===== Configuração inicial (pode ser alterada na Área do mesário) =====
+  // Fotos embutidas só na versão publicada, para não guardar foto de família no repositório da loja.
+  const FOTO_CRIS = "";
+  const FOTO_LURDINHA = "";
+  const FOTO_IRACEMA = "";
+  const FOTO_NEGA = "";
+  const FOTO_ZENIR = "";
+  const FOTO_MARY_CELIA = "";
+  const CANDIDATOS_PADRAO = [
+    { numero: "10", nome: "Cris", partido: "Partido da Transformação", cor: "#2a9bd1", foto: FOTO_CRIS },
+    { numero: "50", nome: "Tia Lurdinha", partido: "Partido do Vatapá e Creme de Galinha", cor: "#e0822b", foto: FOTO_LURDINHA },
+    { numero: "90", nome: "Titia (Iracema)", partido: "Partido do “FALA SÉRIO”", cor: "#9aa83a", foto: FOTO_IRACEMA },
+    { numero: "40", nome: "Nega", partido: "Partido da Continuação com Ação", cor: "#2a9d8f", foto: FOTO_NEGA },
+    { numero: "70", nome: "Zenir", partido: "Partido de APOIO AO IDOSO", cor: "#34495e", foto: FOTO_ZENIR },
+    { numero: "30", nome: "Mary Celia", partido: "Partido do BEM ESTAR E SAÚDE", cor: "#8bc34a", foto: FOTO_MARY_CELIA }
+  ];
+  const PIN_MESARIO = "1234";
+  const CHAVE = "urna-quintal-das-veias-v8";
+
+  // ===== Estado =====
+  let dados = carregar();
+  let digitos = "";
+  let branco = false;
+  let travada = false; // durante a tela de FIM
+
+  function carregar() {
+    const base = { candidatos: CANDIDATOS_PADRAO.map(c => ({ ...c })), votos: {}, brancos: 0, nulos: 0 };
+    try {
+      const s = JSON.parse(localStorage.getItem(CHAVE));
+      if (s && Array.isArray(s.candidatos) && s.candidatos.length === CANDIDATOS_PADRAO.length) return { ...base, ...s };
+    } catch (e) {}
+    return base;
+  }
+  function salvar() {
+    try { localStorage.setItem(CHAVE, JSON.stringify(dados)); } catch (e) {}
+  }
+  const acha = n => dados.candidatos.find(c => c.numero === n);
+  const total = () => Object.values(dados.votos).reduce((a, b) => a + b, 0) + dados.brancos + dados.nulos;
+  const iniciais = nome => nome.trim().split(/\s+/).filter(p => p.length > 2 || /^[A-ZÀ-Ú]/.test(p)).slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
+  const retrato = c => c.foto ? `<img src="${esc(c.foto)}" alt="Foto de ${esc(c.nome)}">` : esc(iniciais(c.nome));
+  const esc = s => String(s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+
+  // ===== Som (bipes da urna) =====
+  let ctx = null;
+  function bipe(freq, ini, dur) {
+    try {
+      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "square"; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, ctx.currentTime + ini);
+      g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + ini + 0.005);
+      g.gain.setValueAtTime(0.12, ctx.currentTime + ini + dur - 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + ini + dur);
+      o.connect(g).connect(ctx.destination);
+      o.start(ctx.currentTime + ini); o.stop(ctx.currentTime + ini + dur + 0.02);
+    } catch (e) {}
+  }
+  const somTecla = () => bipe(1150, 0, 0.07);
+  function somFim() { // o famoso "pi-pi-pi-pi-piii"
+    [0, .11, .22, .33].forEach(t => bipe(1050, t, .08));
+    bipe(1050, .44, .35);
+  }
+
+  // ===== Tela =====
+  const tela = document.getElementById("tela");
+  function desenhar() {
+    const cand = digitos.length === 2 ? acha(digitos) : null;
+    const completo = branco || digitos.length === 2;
+    let info = "", foto = "";
+
+    if (branco) {
+      info = `<div class="aviso-grande">VOTO EM BRANCO</div>`;
+    } else {
+      const caixas = [0, 1].map(i =>
+        `<div class="caixa${i === digitos.length ? " ativa" : ""}">${digitos[i] || ""}</div>`).join("");
+      info = `<div class="numero"><span>Número:</span><div class="caixas">${caixas}</div></div>`;
+      if (cand) {
+        info += `<div class="dado">Nome: <b>${esc(cand.nome)}</b></div>
+                 <div class="dado">Partido: ${esc(cand.partido)}</div>`;
+        foto = `<div class="foto"><div class="foto-quadro" style="background:${esc(cand.cor)}">${retrato(cand)}</div><span>Presidente</span></div>`;
+      } else if (digitos.length === 2) {
+        info += `<div class="aviso-grande">NÚMERO ERRADO</div><div class="aviso-grande">VOTO NULO</div>`;
+      }
+    }
+
+    tela.innerHTML = `
+      <div class="tela-corpo">
+        <div class="tela-info">
+          <div class="rotulo-sm">${completo ? "SEU VOTO PARA" : "&nbsp;"}</div>
+          <div class="cargo">PRESIDENTE</div>
+          ${info}
+        </div>
+        ${foto}
+      </div>
+      <div class="tela-rodape"${completo ? "" : " hidden"}>
+        Aperte a tecla:<br>
+        <b>CONFIRMA</b> para CONFIRMAR este voto<br>
+        <b>CORRIGE</b> para REINICIAR este voto
+      </div>`;
+  }
+
+  function telaFim() {
+    tela.innerHTML = `<div class="fim"><strong>FIM</strong><small>VOTOU</small></div>`;
+  }
+
+  function atualizarContador() {
+    const n = total();
+    document.getElementById("contador").textContent = `${n} ${n === 1 ? "eleitor votou" : "eleitores votaram"}`;
+  }
+
+  // ===== Ações =====
+  function digitar(d) {
+    if (travada || branco || digitos.length >= 2) return;
+    somTecla(); digitos += d; desenhar();
+  }
+  function votarBranco() {
+    if (travada || digitos.length) { if (!travada) somTecla(); return; } // na urna real, corrija antes
+    somTecla(); branco = true; desenhar();
+  }
+  function corrigir() {
+    if (travada) return;
+    somTecla(); digitos = ""; branco = false; desenhar();
+  }
+  function confirmar() {
+    if (travada || !(branco || digitos.length === 2)) return;
+    if (branco) dados.brancos++;
+    else if (acha(digitos)) dados.votos[digitos] = (dados.votos[digitos] || 0) + 1;
+    else dados.nulos++;
+    salvar(); somFim(); atualizarContador();
+    travada = true; telaFim();
+    setTimeout(() => { travada = false; digitos = ""; branco = false; desenhar(); }, 3000);
+  }
+
+  // Teclado numérico da urna (1-9 e 0 embaixo, como na urna real)
+  const numeros = document.getElementById("numeros");
+  ["1","2","3","4","5","6","7","8","9","0"].forEach(d => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "tecla" + (d === "0" ? " zero" : ""); b.textContent = d; b.dataset.d = d;
+    b.addEventListener("click", () => digitar(d));
+    numeros.appendChild(b);
+  });
+  document.getElementById("t-branco").addEventListener("click", votarBranco);
+  document.getElementById("t-corrige").addEventListener("click", corrigir);
+  document.getElementById("t-confirma").addEventListener("click", confirmar);
+
+  function piscar(el) { if (!el) return; el.classList.add("apertada"); setTimeout(() => el.classList.remove("apertada"), 120); }
+  document.addEventListener("keydown", e => {
+    if (!document.getElementById("mesario").hidden) return;
+    if (e.target.closest("input")) return;
+    if (/^[0-9]$/.test(e.key)) { piscar(numeros.querySelector(`[data-d="${e.key}"]`)); digitar(e.key); }
+    else if (e.key === "Backspace" || e.key === "Escape") { e.preventDefault(); piscar(document.getElementById("t-corrige")); corrigir(); }
+    else if (e.key === "Enter") { e.preventDefault(); piscar(document.getElementById("t-confirma")); confirmar(); }
+    else if (e.key.toLowerCase() === "b") { piscar(document.getElementById("t-branco")); votarBranco(); }
+  });
+
+  // ===== Mesário =====
+  const mesario = document.getElementById("mesario");
+  const conteudo = document.getElementById("mesario-conteudo");
+  const pinForm = document.getElementById("pin-form");
+
+  document.getElementById("abrir-mesario").addEventListener("click", () => {
+    mesario.hidden = false; conteudo.hidden = true; pinForm.hidden = false;
+    document.getElementById("pin").value = ""; document.getElementById("pin-erro").hidden = true;
+    document.getElementById("pin").focus();
+    mesario.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  document.getElementById("fechar-mesario").addEventListener("click", () => {
+    mesario.hidden = true; desarmarZerar();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  pinForm.addEventListener("submit", e => {
+    e.preventDefault();
+    if (document.getElementById("pin").value === PIN_MESARIO) {
+      pinForm.hidden = true; conteudo.hidden = false; renderBoletim(); renderCandForm();
+    } else {
+      document.getElementById("pin-erro").hidden = false;
+    }
+  });
+
+  function renderBoletim() {
+    const validos = Object.values(dados.votos).reduce((a, b) => a + b, 0);
+    const lista = dados.candidatos
+      .map(c => ({ ...c, v: dados.votos[c.numero] || 0 }))
+      .sort((a, b) => b.v - a.v);
+    const pct = v => validos ? (v / validos * 100) : 0;
+    const fmt = n => n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+    let html = lista.map(c => `
+      <div class="linha-res">
+        <span>${esc(c.numero)}</span>
+        <span class="nm">${esc(c.nome)}</span>
+        <span class="vt">${c.v} voto${c.v === 1 ? "" : "s"} · ${fmt(pct(c.v))}%</span>
+        <div class="barra"><i style="width:${pct(c.v)}%;background:${esc(c.cor)}"></i></div>
+      </div>`).join("");
+
+    html += `<div class="resumo">
+      <span>Válidos: ${validos}</span><span>Brancos: ${dados.brancos}</span>
+      <span>Nulos: ${dados.nulos}</span><span>Total: ${total()}</span></div>`;
+
+    // Regra de maioria absoluta dos votos válidos, como na eleição de verdade
+    let veredito;
+    if (!validos) veredito = "Nenhum voto válido ainda.";
+    else if (pct(lista[0].v) > 50) veredito = `<b>${esc(lista[0].nome)}</b> está eleito(a) no 1º turno com ${fmt(pct(lista[0].v))}% dos votos válidos.`;
+    else {
+      const segundo = lista[1].v;
+      const empatados = lista.filter((c, i) => i > 0 && c.v === segundo);
+      if (lista[0].v === segundo)
+        veredito = `Empate no topo entre ${lista.filter(c => c.v === lista[0].v).map(c => `<b>${esc(c.nome)}</b>`).join(", ")}. Vai ter 2º turno.`;
+      else if (empatados.length > 1)
+        veredito = `Ninguém passou de 50%. <b>${esc(lista[0].nome)}</b> vai ao 2º turno; o 2º lugar está empatado entre ${empatados.map(c => esc(c.nome)).join(", ")}.`;
+      else
+        veredito = `Ninguém passou de 50% dos válidos. 2º turno entre <b>${esc(lista[0].nome)}</b> e <b>${esc(lista[1].nome)}</b>.`;
+    }
+    html += `<div class="veredito">${veredito}</div>`;
+    document.getElementById("boletim").innerHTML = html;
+  }
+
+  function renderCandForm() {
+    document.getElementById("cand-form").innerHTML = dados.candidatos.map((c, i) => `
+      <div class="cand-linha">
+        <div class="miniatura" style="background:${esc(c.cor)}">${retrato(c)}</div>
+        <input class="num" id="c${i}-num" aria-label="Número do candidato ${i + 1}" inputmode="numeric" maxlength="2" value="${esc(c.numero)}">
+        <input id="c${i}-nome" aria-label="Nome do candidato ${i + 1}" maxlength="40" value="${esc(c.nome)}">
+        <input class="partido" id="c${i}-partido" aria-label="Partido do candidato ${i + 1}" maxlength="50" value="${esc(c.partido)}">
+        <div class="foto-botoes">
+          <label class="btn" for="c${i}-arquivo">${c.foto ? "Trocar foto" : "Pôr foto"}<input type="file" id="c${i}-arquivo" accept="image/*" data-i="${i}"></label>
+          ${c.foto ? `<button class="btn" type="button" data-tirar="${i}">Tirar foto</button>` : ""}
+        </div>
+      </div>`).join("");
+    document.getElementById("cand-ok").hidden = true;
+    document.getElementById("cand-erro").hidden = true;
+  }
+
+  // Fotos: recorta em 3x4 e reduz para caber no armazenamento do navegador
+  function reduzirFoto(arquivo) {
+    return new Promise((ok, falha) => {
+      const url = URL.createObjectURL(arquivo), img = new Image();
+      img.onload = () => {
+        const W = 300, H = 400, cv = document.createElement("canvas");
+        cv.width = W; cv.height = H;
+        const esc = Math.max(W / img.width, H / img.height);
+        const w = img.width * esc, h = img.height * esc;
+        cv.getContext("2d").drawImage(img, (W - w) / 2, (H - h) / 3, w, h);
+        URL.revokeObjectURL(url); ok(cv.toDataURL("image/jpeg", 0.8));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); falha(); };
+      img.src = url;
+    });
+  }
+  function mudarFoto(i, foto) {
+    const erro = document.getElementById("cand-erro"), ok = document.getElementById("cand-ok");
+    const antes = dados.candidatos[i].foto;
+    dados.candidatos[i].foto = foto;
+    try { localStorage.setItem(CHAVE, JSON.stringify(dados)); }
+    catch (e) {
+      dados.candidatos[i].foto = antes;
+      erro.textContent = "Não coube no armazenamento do navegador. Tente uma foto menor."; erro.hidden = false; return;
+    }
+    renderCandForm(); desenhar();
+    ok.textContent = foto ? "Foto salva." : "Foto removida."; ok.hidden = false;
+  }
+  const candForm = document.getElementById("cand-form");
+  candForm.addEventListener("change", async e => {
+    const inp = e.target;
+    if (inp.type !== "file" || !inp.files[0]) return;
+    try { mudarFoto(+inp.dataset.i, await reduzirFoto(inp.files[0])); }
+    catch (err) {
+      const erro = document.getElementById("cand-erro");
+      erro.textContent = "Não consegui abrir essa imagem. Use JPG ou PNG."; erro.hidden = false;
+    }
+  });
+  candForm.addEventListener("click", e => {
+    const b = e.target.closest("[data-tirar]");
+    if (b) mudarFoto(+b.dataset.tirar, "");
+  });
+
+  document.getElementById("salvar-cand").addEventListener("click", () => {
+    const erro = document.getElementById("cand-erro"), ok = document.getElementById("cand-ok");
+    const novos = dados.candidatos.map((c, i) => ({
+      ...c,
+      numero: document.getElementById(`c${i}-num`).value.trim(),
+      nome: document.getElementById(`c${i}-nome`).value.trim(),
+      partido: document.getElementById(`c${i}-partido`).value.trim()
+    }));
+    let msg = "";
+    if (novos.some(c => !/^[0-9]{2}$/.test(c.numero))) msg = "Cada número precisa ter exatamente 2 dígitos.";
+    else if (new Set(novos.map(c => c.numero)).size !== novos.length) msg = "Dois candidatos estão com o mesmo número.";
+    else if (novos.some(c => !c.nome)) msg = "Preencha o nome de todos os candidatos.";
+    else if (total() > 0 && novos.some((c, i) => c.numero !== dados.candidatos[i].numero))
+      msg = "Já há votos registrados. Zere os votos antes de trocar os números.";
+    if (msg) { erro.textContent = msg; erro.hidden = false; ok.hidden = true; return; }
+    novos.forEach(c => { if (!c.partido) c.partido = "Sem partido"; });
+    dados.candidatos = novos; salvar();
+    erro.hidden = true; ok.textContent = "Candidatos salvos."; ok.hidden = false;
+    renderBoletim(); renderCandForm(); desenhar();
+    document.getElementById("cand-ok").hidden = false;
+  });
+
+  // Zerar em dois cliques (o navegador da prévia não mostra confirm())
+  const zerar = document.getElementById("zerar"), zerarMsg = document.getElementById("zerar-msg");
+  let armado = false, timerZerar;
+  function desarmarZerar() {
+    armado = false; clearTimeout(timerZerar);
+    zerar.classList.remove("armado"); zerar.textContent = "Zerar todos os votos";
+  }
+  zerar.addEventListener("click", () => {
+    if (!armado) {
+      armado = true; zerar.classList.add("armado"); zerar.textContent = "Clique de novo para apagar os votos";
+      zerarMsg.textContent = "";
+      timerZerar = setTimeout(desarmarZerar, 5000);
+      return;
+    }
+    desarmarZerar();
+    dados.votos = {}; dados.brancos = 0; dados.nulos = 0; salvar();
+    zerarMsg.textContent = "Votos apagados. Urna pronta para nova eleição.";
+    renderBoletim(); atualizarContador();
+  });
+
+  desenhar(); atualizarContador();
+})();
+</script>
+</body>
+</html>
