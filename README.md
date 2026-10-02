@@ -24,5 +24,5 @@ Abra o `index.html` no navegador do aparelho que vai servir de urna.
 | 70 | Zenir | Partido de APOIO AO IDOSO |
 | 90 | Titia (Iracema) | Partido do “FALA SÉRIO” |
 
-As fotos das candidatas não ficam neste repositório, que é público.
-Para colocá-las, use a área do mesário no aparelho da votação.
+As fotos das candidatas estão embutidas no próprio `index.html`, então o arquivo
+funciona sozinho, mesmo copiado para outro aparelho. **Mantenha este repositório privado.**
